@@ -1,0 +1,93 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(120deg, #646cff 0%, #82ca9d 100%);
+}
+
+.login-box {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px #0002;
+  padding: 40px 32px;
+  min-width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+}
+
+.login-box h2 {
+  margin-bottom: 12px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #646cff;
+}
+
+.login-box form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-box input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+.login-box input:focus {
+  border-color: #646cff;
+}
+
+.login-box button {
+  padding: 10px 0;
+  border-radius: 8px;
+  border: none;
+  background: #646cff;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+.login-box button:hover {
+  background: #4b54c6;
+}
+
+.login-box .alt-btn {
+  background: #82ca9d;
+  color: #fff;
+  margin-top: 0;
+}
+.login-box .alt-btn:hover {
+  background: #5fa87a;
+}
+
+.login-box .error {
+  color: #d32f2f;
+  font-size: 1rem;
+  margin-top: 6px;
+}
+.login-box .success {
+  color: #388e3c;
+  font-size: 1rem;
+  margin-top: 6px;
+}
+
+@media (max-width: 500px) {
+  .login-box {
+    padding: 24px 8px;
+    min-width: 90vw;
+  }
+  .login-box h2 {
+    font-size: 1.3rem;
+  }
+}
