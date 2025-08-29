@@ -1,3 +1,8 @@
+// =============================================================
+// Ficheiro: App.jsx
+// Descrição: Componente principal da aplicação React, gere as rotas do frontend.
+// Utilidade: Ponto de entrada para o sistema de navegação entre Login e Dashboard.
+// =============================================================
 
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';

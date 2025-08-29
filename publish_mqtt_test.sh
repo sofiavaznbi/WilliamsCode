@@ -1,41 +1,43 @@
 #!/bin/bash
-# Script para publicar mensajes MQTT de prueba en los topics de los dispositivos del usuario admin
+# =============================================================
+# Ficheiro: publish_mqtt_test.sh
+# Descrição: Script para publicar mensagens MQTT de teste nos tópicos dos dispositivos do utilizador admin.
+# Utilidade: Simula o envio de medições para o broker MQTT, útil para testes do sistema.
+# Uso: ./publish_mqtt_test.sh [quantidade]
+# =============================================================
 
-TOPICS=("iot/device/1" "iot/device/2")
-COUNT=${1:-10}
+TOPICOS=("iot/device/1" "iot/device/2")
+QUANTIDADE=${1:-10}
 
-
-
-
-for i in $(seq 1 $COUNT)
+for i in $(seq 1 $QUANTIDADE)
 do
-  # Medidor Principal: alterna tendencia creciente/descendente y añade aleatoriedad
+  # Medidor Principal: alterna tendência crescente/decrescente e adiciona aleatoriedade
   if ((i % 20 < 10)); then
-    # Tendencia creciente
+    # Tendência crescente
     CONSUMO1=$(awk -v base=0.8 -v step=0.05 -v idx=${i} -v var=0.15 'BEGIN{srand(); print base+step*idx+rand()*var}')
     POTENCIA1=$(awk -v base=1100 -v step=10 -v idx=${i} -v var=40 'BEGIN{srand(); print int(base+step*idx+rand()*var)}')
   else
-    # Tendencia descendente
+    # Tendência decrescente
     CONSUMO1=$(awk -v base=1.3 -v step=0.05 -v idx=${i} -v var=0.15 'BEGIN{srand(); print base-step*idx+rand()*var}')
     POTENCIA1=$(awk -v base=1300 -v step=10 -v idx=${i} -v var=40 'BEGIN{srand(); print int(base-step*idx+rand()*var)}')
   fi
-  VOLTAJE1=$(awk -v min=228 -v max=232 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
-  mosquitto_pub -h localhost -t "${TOPICS[0]}" -m "{\"consumo\":$(printf "%.2f" $CONSUMO1),\"voltaje\":$VOLTAJE1,\"potencia\":$POTENCIA1}"
+  VOLTAGEM1=$(awk -v min=228 -v max=232 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
+  mosquitto_pub -h localhost -t "${TOPICOS[0]}" -m "{\"consumo\":$(printf "%.2f" $CONSUMO1),\"voltagem\":$VOLTAGEM1,\"potencia\":$POTENCIA1}"
 
-  # Medidor Secundario: alterna tendencia descendente/creciente y añade aleatoriedad
+  # Medidor Secundário: alterna tendência decrescente/crescente e adiciona aleatoriedade
   if ((i % 20 < 10)); then
-    # Tendencia descendente
+    # Tendência decrescente
     CONSUMO2=$(awk -v base=0.9 -v step=0.04 -v idx=${i} -v var=0.18 'BEGIN{srand(); print base-step*idx+rand()*var}')
     POTENCIA2=$(awk -v base=900 -v step=8 -v idx=${i} -v var=60 'BEGIN{srand(); print int(base-step*idx+rand()*var)}')
   else
-    # Tendencia creciente
+    # Tendência crescente
     CONSUMO2=$(awk -v base=0.4 -v step=0.04 -v idx=${i} -v var=0.18 'BEGIN{srand(); print base+step*idx+rand()*var}')
     POTENCIA2=$(awk -v base=700 -v step=8 -v idx=${i} -v var=60 'BEGIN{srand(); print int(base+step*idx+rand()*var)}')
   fi
-  VOLTAJE2=$(awk -v min=227 -v max=231 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
-  mosquitto_pub -h localhost -t "${TOPICS[1]}" -m "{\"consumo\":$(printf "%.2f" $CONSUMO2),\"voltaje\":$VOLTAJE2,\"potencia\":$POTENCIA2}"
+  VOLTAGEM2=$(awk -v min=227 -v max=231 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
+  mosquitto_pub -h localhost -t "${TOPICOS[1]}" -m "{\"consumo\":$(printf "%.2f" $CONSUMO2),\"voltagem\":$VOLTAGEM2,\"potencia\":$POTENCIA2}"
 
   sleep 1
 done
 
-echo "$((COUNT*2)) mensajes publicados en los topics ${TOPICS[*]}."
+echo "$((QUANTIDADE*2)) mensagens publicadas nos tópicos ${TOPICOS[*]}."

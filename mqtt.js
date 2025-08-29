@@ -1,61 +1,65 @@
+// =============================================================
+// Ficheiro: mqtt.js
+// Descrição: Módulo para ligação ao broker MQTT, receção de mensagens dos dispositivos IoT e armazenamento das medições na base de dados.
+// Utilidade: Recebe dados dos dispositivos via MQTT e envia atualizações em tempo real para o frontend via WebSocket.
+// =============================================================
 const mqtt = require('mqtt');
 const db = require('./db');
 const { broadcastMedicion } = require('./ws');
 
-// Conexión al broker local
+// Ligação ao broker local
 const client = mqtt.connect('mqtt://localhost:1883');
 
-const TOPIC = '#';
+const TOPICO = '#';
 
 client.on('connect', () => {
-  console.log('Conectado a MQTT broker');
-  client.subscribe(TOPIC, (err) => {
+  console.log('Ligado ao broker MQTT');
+  client.subscribe(TOPICO, (err) => {
     if (err) {
-      console.error('Error al suscribirse al topic:', err);
+      console.error('Erro ao subscrever o tópico:', err);
     } else {
-      console.log(`Suscrito al topic: ${TOPIC}`);
+      console.log(`Subscrito ao tópico: ${TOPICO}`);
     }
   });
 });
 
-
 client.on('message', async (topic, message) => {
   try {
-    const data = JSON.parse(message.toString());
-    console.log('Mensaje recibido:', data);
+    const dados = JSON.parse(message.toString());
+    console.log('Mensagem recebida:', dados);
 
-    // Buscar dispositivo_id por topic_mqtt
+    // Procurar device_id pelo topic_mqtt
     db.db.get(
       'SELECT id FROM devices WHERE topic_mqtt = ?',
       [topic],
       (err, row) => {
         if (err) {
-          console.error('Error buscando dispositivo:', err);
+          console.error('Erro ao procurar dispositivo:', err);
           return;
         }
         if (!row) {
-          console.warn('No se encontró dispositivo para el topic:', topic);
+          console.warn('Não foi encontrado dispositivo para o tópico:', topic);
           return;
         }
-        const dispositivo_id = row.id;
+        const id_dispositivo = row.id;
         const timestamp = new Date().toISOString();
-        db.insertMedicion(
-          dispositivo_id,
+        db.inserirMedicao(
+          id_dispositivo,
           timestamp,
-          data.consumo,
-          data.voltaje,
-          data.potencia,
+          dados.consumo,
+          dados.voltagem,
+          dados.potencia,
           (err) => {
             if (err) {
-              console.error('Error insertando medición:', err);
+              console.error('Erro ao inserir medição:', err);
             } else {
-              console.log('Medición guardada en la BD');
+              console.log('Medição guardada na base de dados');
               broadcastMedicion({
-                device_id: dispositivo_id,
+                device_id: id_dispositivo,
                 timestamp,
-                consumo: data.consumo,
-                voltaje: data.voltaje,
-                potencia: data.potencia
+                consumo: dados.consumo,
+                voltagem: dados.voltagem,
+                potencia: dados.potencia
               });
             }
           }
@@ -63,7 +67,7 @@ client.on('message', async (topic, message) => {
       }
     );
   } catch (err) {
-    console.error('Error al parsear mensaje MQTT:', err);
+    console.error('Erro ao analisar mensagem MQTT:', err);
   }
 });
 

@@ -1,3 +1,11 @@
+// ============================================================================
+// Componente CustomTooltip
+//
+// Este componente React exibe um tooltip personalizado para gráficos de energia.
+// Mostra detalhes do ponto selecionado, incluindo consumo, custo, potência,
+// voltagem e alerta de anomalia, se aplicável. Utilizado para fornecer informação
+// detalhada ao utilizador ao passar o rato sobre os pontos do gráfico.
+// ============================================================================
 import React from 'react';
 
 function CustomTooltip({ active, payload, label, costePorKwh, anomalías }) {

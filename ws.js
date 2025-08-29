@@ -1,3 +1,8 @@
+// =============================================================
+// Ficheiro: ws.js
+// Descrição: Módulo para gerir WebSocket no backend do sistema IoT.
+// Utilidade: Permite enviar atualizações em tempo real para o frontend sempre que há novas medições.
+// =============================================================
 const WebSocket = require('ws');
 let wss;
 const clients = new Set();

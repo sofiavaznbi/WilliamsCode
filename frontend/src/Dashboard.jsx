@@ -1,126 +1,130 @@
 
-
+// =============================================================
+// Ficheiro: Dashboard.jsx
+// Descrição: Componente principal do painel de controlo do frontend React.
+// Utilidade: Mostra dispositivos, gráficos de consumo, recomendações, automatizações e alertas.
+// =============================================================
 
 import React, { useState, useEffect, useRef } from "react";
 import TopBar from "./components/TopBar";
 import EnergyChartBlock from "./components/EnergyChartBlock";
 import './styles/dashboard.css';
 
-const costePorKwh = 0.18;
+const custoPorKwh = 0.18;
 
 const Dashboard = () => {
-  const [dark, setDark] = useState(false);
-  const [devices, setDevices] = useState([]);
-  const [selectedDevice, setSelectedDevice] = useState(null);
-  const [loadingDevices, setLoadingDevices] = useState(true);
-  const [data, setData] = useState([]);
-  const [anomalías, setAnomalias] = useState([]);
-  const [loadingData, setLoadingData] = useState(false);
-  const [chartParams, setChartParams] = useState({ rango: '1h', startDate: '', endDate: '' });
+  const [escuro, setEscuro] = useState(false);
+  const [dispositivos, setDispositivos] = useState([]);
+  const [dispositivoSelecionado, setDispositivoSelecionado] = useState(null);
+  const [carregandoDispositivos, setCarregandoDispositivos] = useState(true);
+  const [dados, setDados] = useState([]);
+  const [anomalias, setAnomalias] = useState([]);
+  const [carregandoDados, setCarregandoDados] = useState(false);
+  const [parametrosGrafico, setParametrosGrafico] = useState({ intervalo: '1h', dataInicio: '', dataFim: '' });
   const wsRef = useRef(null);
 
-  // Obtener dispositivos al cargar
+  // Obter dispositivos ao carregar
   useEffect(() => {
-    setLoadingDevices(true);
+    setCarregandoDispositivos(true);
     fetch("/devices", { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
       .then(res => res.json())
       .then(devs => {
-        setDevices(devs);
-        setSelectedDevice(devs[0]?.id || null);
-        setLoadingDevices(false);
+        setDispositivos(devs);
+        setDispositivoSelecionado(devs[0]?.id || null);
+        setCarregandoDispositivos(false);
       });
   }, []);
 
-  // Obtener mediciones del dispositivo seleccionado
-  const fetchData = (opts = {}) => {
-    if (!selectedDevice) return;
-    setLoadingData(true);
-    let url = `/consumption/${selectedDevice}`;
+  // Obter medições do dispositivo selecionado
+  const obterDados = (opts = {}) => {
+    if (!dispositivoSelecionado) return;
+    setCarregandoDados(true);
+    let url = `/consumption/${dispositivoSelecionado}`;
     const params = [];
-    if (opts.startDate) params.push(`start=${opts.startDate}`);
-    if (opts.endDate) params.push(`end=${opts.endDate}`);
+    if (opts.dataInicio) params.push(`start=${opts.dataInicio}`);
+    if (opts.dataFim) params.push(`end=${opts.dataFim}`);
     if (params.length) url += '?' + params.join('&');
     fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
       .then(res => res.json())
       .then(rows => {
-        setData(rows.reverse());
+        setDados(rows.reverse());
         setAnomalias(rows.filter(r => r.consumo > 2.5));
-        setLoadingData(false);
+        setCarregandoDados(false);
       });
   };
 
   useEffect(() => {
-    fetchData();
-  }, [selectedDevice]);
+    obterDados();
+  }, [dispositivoSelecionado]);
 
-  // WebSocket para actualizaciones en tiempo real
+  // WebSocket para atualizações em tempo real
   useEffect(() => {
     wsRef.current = new window.WebSocket(`ws://${window.location.hostname}:4000`);
     wsRef.current.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      if (msg.type === "medicion" && msg.data.device_id === selectedDevice) {
-        setData(prev => {
-          const updated = [...prev.slice(-49), msg.data];
-          // Filtrar según rango y fechas
-          let filtered = updated;
-          const now = Date.now();
-          let rangoMs = 3600000;
-          switch (chartParams.rango) {
-            case '24h': rangoMs = 86400000; break;
-            case '7d': rangoMs = 604800000; break;
-            case '30d': rangoMs = 2592000000; break;
-            default: rangoMs = 3600000;
+      if (msg.type === "medicao" && msg.data.device_id === dispositivoSelecionado) {
+        setDados(prev => {
+          const atualizado = [...prev.slice(-49), msg.data];
+          // Filtrar conforme intervalo e datas
+          let filtrado = atualizado;
+          const agora = Date.now();
+          let intervaloMs = 3600000;
+          switch (parametrosGrafico.intervalo) {
+            case '24h': intervaloMs = 86400000; break;
+            case '7d': intervaloMs = 604800000; break;
+            case '30d': intervaloMs = 2592000000; break;
+            default: intervaloMs = 3600000;
           }
-          if (chartParams.startDate && chartParams.endDate) {
-            const start = new Date(chartParams.startDate).getTime();
-            const end = new Date(chartParams.endDate).getTime();
-            filtered = updated.filter(d => {
+          if (parametrosGrafico.dataInicio && parametrosGrafico.dataFim) {
+            const inicio = new Date(parametrosGrafico.dataInicio).getTime();
+            const fim = new Date(parametrosGrafico.dataFim).getTime();
+            filtrado = atualizado.filter(d => {
               const t = new Date(d.timestamp).getTime();
-              return t >= start && t <= end;
+              return t >= inicio && t <= fim;
             });
           } else {
-            filtered = updated.filter(d => now - new Date(d.timestamp).getTime() <= rangoMs);
+            filtrado = atualizado.filter(d => agora - new Date(d.timestamp).getTime() <= intervaloMs);
           }
-          setAnomalias(filtered.filter(r => r.consumo > 2.5));
-          return filtered;
+          setAnomalias(filtrado.filter(r => r.consumo > 2.5));
+          return filtrado;
         });
       }
     };
     return () => wsRef.current?.close();
-  }, [selectedDevice, chartParams]);
+  }, [dispositivoSelecionado, parametrosGrafico]);
 
-  // Cálculos para paneles
-  const consumoTotal = data.reduce((acc, d) => acc + (d.consumo || 0), 0);
-  const potenciaMax = Math.max(0, ...data.map(d => d.potencia || 0));
-  const ultimaMedicion = data[data.length - 1];
-  const corrienteActual = ultimaMedicion?.corriente || 0;
-  const estado = ultimaMedicion?.estado || 'ON';
+  // Cálculos para os painéis
+  const consumoTotal = dados.reduce((acc, d) => acc + (d.consumo || 0), 0);
+  const potenciaMax = Math.max(0, ...dados.map(d => d.potencia || 0));
+  const ultimaMedicao = dados[dados.length - 1];
+  const correnteAtual = ultimaMedicao?.corrente || 0;
+  const estado = ultimaMedicao?.estado || 'ON';
 
-  // Costes
-  const costeHoy = consumoTotal * costePorKwh;
-  const costeMes = costeHoy * 30;
-  const costeAño = costeHoy * 365;
+  // Custos
+  const custoHoje = consumoTotal * custoPorKwh;
+  const custoMes = custoHoje * 30;
+  const custoAno = custoHoje * 365;
 
-  // Recomendaciones y automatizaciones (ejemplo)
-  const recomendaciones = [
-    "Este dispositivo estuvo encendido 12h ayer, considera apagarlo antes para ahorrar 5,60€.",
-    "Este dispositivo es responsable del 30% de tu factura este mes."
+  // Recomendações e automatizações (exemplo)
+  const recomendacoes = [
+    "Este dispositivo esteve ligado 12h ontem, considere desligá-lo antes para poupar 5,60€.",
+    "Este dispositivo é responsável por 30% da sua fatura este mês."
   ];
-  const automatizaciones = [
-    { if: "Consumo > 2000 W", then: "Apagar Sonoff POW" },
-    { if: "Hora = 7:00 AM", then: "Encender Sonoff POW" }
+  const automatizacoes = [
+    { if: "Consumo > 2000 W", then: "Desligar Sonoff POW" },
+    { if: "Hora = 7:00 AM", then: "Ligar Sonoff POW" }
   ];
   const alertas = [
-    { tipo: "Power", valor: "2.000 W", accion: "Enviar notificación" },
-    { tipo: "Control towel", valor: "", accion: "Have aftail camles" }
+    { tipo: "Potência", valor: "2.000 W", acao: "Enviar notificação" },
+    { tipo: "Control towel", valor: "", acao: "Ação personalizada" }
   ];
 
   return (
-    <div className={dark ? "dashboard-main dark" : "dashboard-main"}>
+    <div className={escuro ? "dashboard-main dark" : "dashboard-main"}>
       <TopBar />
       <div style={{textAlign:'right',margin:'8px 0'}}>
-        <button onClick={() => setDark(d => !d)} style={{padding:'8px 16px',borderRadius:'8px',background:dark?'#222':'#eaf6ff',color:dark?'#fff':'#222',border:'none',cursor:'pointer'}}>
-          {dark ? '🌞 Modo claro' : '🌙 Modo oscuro'}
+        <button onClick={() => setEscuro(d => !d)} style={{padding:'8px 16px',borderRadius:'8px',background:escuro?'#222':'#eaf6ff',color:escuro?'#fff':'#222',border:'none',cursor:'pointer'}}>
+          {escuro ? '🌞 Modo claro' : '🌙 Modo escuro'}
         </button>
       </div>
       <div className="device-card">
@@ -129,49 +133,49 @@ const Dashboard = () => {
           <span>{estado}</span>
         </div>
         <div className="device-info">
-          <div className="power">{ultimaMedicion?.potencia?.toFixed(2) || '--'} W</div>
-          <div className="current">{corrienteActual?.toFixed(2) || '--'} A</div>
-          <div style={{color:'#6b7a99',fontSize:'1rem'}}>{devices.find(d => d.id === selectedDevice)?.nombre || 'Dispositivo'}</div>
+          <div className="power">{ultimaMedicao?.potencia?.toFixed(2) || '--'} W</div>
+          <div className="current">{correnteAtual?.toFixed(2) || '--'} A</div>
+          <div style={{color:'#6b7a99',fontSize:'1rem'}}>{dispositivos.find(d => d.id === dispositivoSelecionado)?.nome || 'Dispositivo'}</div>
         </div>
       </div>
       <div className="section">
-        <div className="section-title">Consumption</div>
+        <div className="section-title">Consumo</div>
         <EnergyChartBlock
-          data={data}
-          anomalías={anomalías}
-          costePorKwh={costePorKwh}
-          loading={loadingData}
+          data={dados}
+          anomalías={anomalias}
+          costePorKwh={custoPorKwh}
+          loading={carregandoDados}
           onRefresh={opts => {
-            setChartParams(prev => ({ ...prev, ...opts }));
-            fetchData(opts);
+            setParametrosGrafico(prev => ({ ...prev, ...opts }));
+            obterDados(opts);
           }}
         />
       </div>
       <div className="section" style={{display:'flex',gap:'32px',flexWrap:'wrap'}}>
         <div className="cost-panel">
-          <div className="section-title">Cost</div>
+          <div className="section-title">Custo</div>
           <div>0,25 € €/kWh</div>
-          <div>€{costeHoy.toFixed(2)} Today</div>
-          <div>€{costeMes.toFixed(2)} Month</div>
-          <div>€{costeAño.toFixed(2)} Year</div>
+          <div>€{custoHoje.toFixed(2)} Hoje</div>
+          <div>€{custoMes.toFixed(2)} Mês</div>
+          <div>€{custoAno.toFixed(2)} Ano</div>
         </div>
         <div className="recommendations">
-          <div className="section-title">Recommendations</div>
-          {recomendaciones.map((r, i) => (
+          <div className="section-title">Recomendações</div>
+          {recomendacoes.map((r, i) => (
             <div className="recommendation-card" key={i}>{r}</div>
           ))}
         </div>
         <div className="automations">
-          <div className="section-title">Automations</div>
-          <button className="automation-card" style={{background:dark?'#222':'#fff',border:'1px solid #e0e7ef',color:dark?'#fff':'#222'}}>+ Create new automation</button>
-          {automatizaciones.map((a, i) => (
-            <div className="automation-card" key={i} style={{background:dark?'#222':'',color:dark?'#fff':'#222'}}><b>IF</b> {a.if}<br /><b>THEN</b> {a.then}</div>
+          <div className="section-title">Automatizações</div>
+          <button className="automation-card" style={{background:escuro?'#222':'#fff',border:'1px solid #e0e7ef',color:escuro?'#fff':'#222'}}>+ Criar nova automatização</button>
+          {automatizacoes.map((a, i) => (
+            <div className="automation-card" key={i} style={{background:escuro?'#222':'',color:escuro?'#fff':'#222'}}><b>SE</b> {a.if}<br /><b>ENTÃO</b> {a.then}</div>
           ))}
         </div>
         <div className="alerts">
-          <div className="section-title">Alerts</div>
+          <div className="section-title">Alertas</div>
           {alertas.map((a, i) => (
-            <div className="alert-card" key={i} style={{background:dark?'#222':'',color:dark?'#fff':'#222'}}><b>{a.tipo}</b> {a.valor} <br />{a.accion}</div>
+            <div className="alert-card" key={i} style={{background:escuro?'#222':'',color:escuro?'#fff':'#222'}}><b>{a.tipo}</b> {a.valor} <br />{a.acao}</div>
           ))}
         </div>
       </div>

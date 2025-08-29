@@ -1,9 +1,13 @@
 #!/bin/bash
-# Script para limpiar la base de datos SQLite (usuarios, dispositivos, mediciones)
+# =============================================================
+# Ficheiro: reset_db.sh
+# Descrição: Script para limpar a base de dados SQLite (utilizadores, dispositivos, medições).
+# Utilidade: Executar este script para apagar todos os dados das tabelas principais.
 # Uso: ./reset_db.sh
+# =============================================================
 
-sqlite3 energy.db "DELETE FROM mediciones;"
-sqlite3 energy.db "DELETE FROM dispositivos;"
-sqlite3 energy.db "DELETE FROM usuarios;"
+sqlite3 energy.db "DELETE FROM measurements;"
+sqlite3 energy.db "DELETE FROM devices;"
+sqlite3 energy.db "DELETE FROM users;"
 
-echo "Base de datos limpiada. Todas las tablas están vacías."
+echo "Base de dados limpa. Todas as tabelas estão vazias."
