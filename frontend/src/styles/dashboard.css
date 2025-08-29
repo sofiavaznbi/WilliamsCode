@@ -1,3 +1,76 @@
+/* Estilos para botão de menu colapsável na Sidebar */
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #333;
+  margin-bottom: 8px;
+  transition: color 0.2s;
+}
+.sidebar-toggle:hover {
+  color: #0077ff;
+}
+
+@media (max-width: 600px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 80vw;
+    max-width: 320px;
+    z-index: 1000;
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    padding: 16px 8px;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar .theme-toggle,
+  .sidebar button {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}
+/* Responsividade avançada para dispositivos móveis */
+@media (max-width: 600px) {
+  .dashboard-main {
+    padding: 8px;
+    gap: 12px;
+  }
+  .topbar {
+    flex-direction: column;
+    padding: 8px 8px;
+    gap: 8px;
+    font-size: 1rem;
+  }
+  .device-card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+  .section {
+    padding: 12px;
+    margin-top: 8px;
+  }
+  .card {
+    padding: 8px 2vw;
+    border-radius: 8px;
+    max-width: 100vw;
+  }
+  .device-list-panel {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .panel-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
 /* Estilos base para dashboard moderno */
 .dashboard-main {
   display: flex;

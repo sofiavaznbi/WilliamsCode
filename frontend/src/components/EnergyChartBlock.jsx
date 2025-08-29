@@ -31,7 +31,7 @@ function EnergyChartBlock({ data, anomalías, costePorKwh, loading, onRefresh })
   const [showConsumo, setShowConsumo] = useState(true);
   const [showPotencia, setShowPotencia] = useState(false);
   const [showVoltaje, setShowVoltaje] = useState(false);
-  const [showCorriente, setShowCorriente] = useState(false);
+  const [showCorrente, setShowCorrente] = useState(false);
 
   const presets = useMemo(() => [
     { label: '1h', value: '1h' },
@@ -64,21 +64,21 @@ function EnergyChartBlock({ data, anomalías, costePorKwh, loading, onRefresh })
     }
   }, [rango]);
   const now = useMemo(() => Date.now(), [data]);
-  let datosFiltrados = useMemo(() => data.filter(d => now - new Date(d.timestamp).getTime() <= rangoMs), [data, now, rangoMs]);
+  let dadosFiltrados = useMemo(() => data.filter(d => now - new Date(d.timestamp).getTime() <= rangoMs), [data, now, rangoMs]);
   if (startDate && endDate) {
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime();
-    datosFiltrados = data.filter(d => {
+    dadosFiltrados = data.filter(d => {
       const t = new Date(d.timestamp).getTime();
       return t >= start && t <= end;
     });
   }
 
   // Valores agregados
-  const totalConsumo = datosFiltrados.reduce((acc, d) => acc + (d.consumo || 0), 0);
-  const avgConsumo = datosFiltrados.length ? totalConsumo / datosFiltrados.length : 0;
-  const totalPotencia = datosFiltrados.reduce((acc, d) => acc + (d.potencia || 0), 0);
-  const avgPotencia = datosFiltrados.length ? totalPotencia / datosFiltrados.length : 0;
+  const totalConsumo = dadosFiltrados.reduce((acc, d) => acc + (d.consumo || 0), 0);
+  const avgConsumo = dadosFiltrados.length ? totalConsumo / dadosFiltrados.length : 0;
+  const totalPotencia = dadosFiltrados.reduce((acc, d) => acc + (d.potencia || 0), 0);
+  const avgPotencia = dadosFiltrados.length ? totalPotencia / dadosFiltrados.length : 0;
 
   // Responsivo
   const chartWidth = window.innerWidth < 900 ? window.innerWidth - 40 : 800;
@@ -159,7 +159,7 @@ function EnergyChartBlock({ data, anomalías, costePorKwh, loading, onRefresh })
         {showConsumo && <span style={{color:'#8884d8',fontWeight:'bold',fontSize:'1.1rem'}}>● Consumo</span>}
         {showPotencia && <span style={{color:'#82ca9d',fontWeight:'bold',fontSize:'1.1rem'}}>● Potência</span>}
         {showVoltaje && <span style={{color:'#ffc658',fontWeight:'bold',fontSize:'1.1rem'}}>● Voltagem</span>}
-        {showCorrente && <span style={{color:'#0088FE',fontWeight:'bold',fontSize:'1.1rem'}}>● Corrente</span>}
+  {showCorrente && <span style={{color:'#0088FE',fontWeight:'bold',fontSize:'1.1rem'}}>● Corrente</span>}
         <span style={{color:'red',fontWeight:'bold',fontSize:'1.1rem'}}>● Anomalia</span>
       </div>
     </section>
